@@ -5,7 +5,7 @@ import { onMount } from 'svelte';
 
   // Az egyes kockadobásokhoz külön-külön állapotok
   let dicePool1 = { diceCount: 2, sides: 20, results: [], messages: [], mode: 'TN', targetNumber: 12 };
-  let dicePool2 = { diceCount: 5, sides: 6, results: [], messages: [], mode: 'TN', targetNumber: 0 };
+  let dicePool2 = { diceCount: 2, sides: 20, results: [], messages: [], mode: 'TN', targetNumber: 12 };
   let dicePool3 = { diceCount: 2, sides: 20, results: [], messages: [], mode: 'TN', targetNumber: 12 };
 
   const availableSides = [4, 6, 8, 10, 12, 20, 100]
@@ -52,7 +52,7 @@ import { onMount } from 'svelte';
   // A játék stílusa szerinti stílus beállítások
   const gameStyles = {
     'Star Trek': {
-      
+      sides: 20,
       mode: 'TN',
 
       backgroundColor: '#190033',
@@ -79,7 +79,13 @@ import { onMount } from 'svelte';
     selectedGame = event.target.value;
     currentStyle = gameStyles[selectedGame];
 
-    
+    const {sides, mode} = gameStyles[selectedGame]
+    dicePool1.sides = sides;
+    dicePool1.mode = mode;
+    dicePool2.sides = sides;
+    dicePool2.mode = mode;
+    dicePool3.sides = sides;
+    dicePool3.mode = mode;
   }
 
   // Általános kockadobó függvény
@@ -93,17 +99,23 @@ function rollDice(dicePool) {
     getMessageForRoll(result, dicePool.sides, dicePool.mode, dicePool.targetNumber)
   );
 }
-  
-function rollForPool1() {
-    rollDice(dicePool1);
+  // A kockadobásokat végző függvények
+  function rollDice1() {
+    dicePool1.results = Array.from({ length: dicePool1.diceCount }, () => Math.floor(Math.random() * dicePool1.sides) + 1);
+    dicePool1.results.sort((a, b) => a - b);
+    dicePool1.messages = dicePool1.results.map(result => getMessageForRoll(result, dicePool1.sides, dicePool1.mode, dicePool1.targetNumber));
   }
 
-  function rollForPool2() {
-    rollDice(dicePool2);
+  function rollDice2() {
+    dicePool2.results = Array.from({ length: dicePool2.diceCount }, () => Math.floor(Math.random() * dicePool2.sides) + 1);
+    dicePool2.results.sort((a, b) => a - b);
+    dicePool2.messages = dicePool2.results.map(result => getMessageForRoll(result, dicePool2.sides, dicePool2.mode, dicePool2.targetNumber));
   }
 
-  function rollForPool3() {
-    rollDice(dicePool3);
+  function rollDice3() {
+    dicePool3.results = Array.from({ length: dicePool3.diceCount }, () => Math.floor(Math.random() * dicePool3.sides) + 1);
+    dicePool3.results.sort((a, b) => a - b);
+    dicePool3.messages = dicePool3.results.map(result => getMessageForRoll(result, dicePool3.sides, dicePool3.mode, dicePool3.targetNumber));
   }
 </script>
 
@@ -160,11 +172,11 @@ function rollForPool1() {
       {#if dicePool1.mode === 'TN'}
       <label>
         Célszám:
-        <input type="number" bind:value={dicePool1.targetNumber} min="2" style="width: 25px;"/>
+        <input type="number" bind:value={dicePool1.targetNumber} min="2" style="width: 20px;"/>
       </label>
       {/if}
 
-      <button style="background-color: {currentStyle.buttonColor};" on:click={rollForPool1}>Dobj!</button>
+      <button style="background-color: {currentStyle.buttonColor};" on:click={rollDice1}>Dobj!</button>
       
       <div class="results">
         {#if dicePool1.results.length > 0}
@@ -186,7 +198,18 @@ function rollForPool1() {
         <input type="number" bind:value={dicePool2.diceCount} min="1"  style="width: 25px;"/> d {dicePool2.sides}
       </label>
 
-      
+      <label>
+    Válassz másik kockát:
+    <select bind:value={dicePool2.sides}>
+      <!-- Csak az engedélyezett oldal számokat tartalmazza -->
+      <option value="4">4</option>
+      <option value="6">6</option>
+      <option value="8">8</option>
+      <option value="12">12</option>
+      <option value="20">20</option>
+      <option value="100">100</option>
+    </select>
+  </label>
 
       <label>
         Értékelési mód:
@@ -205,7 +228,7 @@ function rollForPool1() {
       </label>
       {/if}
       
-      <button style="background-color: {currentStyle.buttonColor};" on:click={rollForPool2}>Dobj!</button>
+      <button style="background-color: {currentStyle.buttonColor};" on:click={rollDice2}>Dobj!</button>
       
       <div class="results">
         {#if dicePool2.results.length > 0}

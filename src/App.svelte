@@ -5,6 +5,7 @@ import { onMount } from 'svelte';
 
   // Az egyes kockadobásokhoz külön-külön állapotok
   let dicePool6 = { diceCount: 4, sides: 6, results: [], messages: [], mode: 'dmg6', targetNumber: 0 };
+  let dicePool6m = { diceCount: 3, sides: 6, results: [], messages: [], mode: 'percentage', targetNumber: 0 };
   let dicePool10 = { diceCount: 5, sides: 10, results: [], messages: [], mode: 'fixed', targetNumber: 0 };
   let dicePool20 = { diceCount: 2, sides: 20, results: [], messages: [], mode: 'TN', targetNumber: 12 };
 
@@ -114,7 +115,12 @@ import { onMount } from 'svelte';
   
 function rollForPool6() {
     rollDice(dicePool6);
-    dicePool6 = { ...dicePool6 }; // Ez egy új referenciát hoz létre, amit Svelte felismer
+    dicePool6 = { ...dicePool6 }; 
+    
+  }
+  function rollForPool6m() {
+    rollDice(dicePool6m);
+    dicePool6m = { ...dicePool6m }; 
     
   }
 
@@ -256,6 +262,29 @@ function rollForPool6() {
     </div>
       
     </div>
+
+    <div class="dice-container" style="background-color: #332020; color: {currentStyle.textColor};">
+      <h2>Sebzés</h2>
+        <label>
+          Dobás:
+          <input type="number" bind:value={dicePool6m.diceCount} min="1"  style="width: 25px;"/> d {dicePool6m.sides}
+      </label>
+    
+      <button style="background-color: {currentStyle.buttonColor};" on:click={rollForPool6m}>Dobj!</button>
+          
+      <div class="results">
+        {#if dicePool6m.results.length > 0}
+          <h3>Eredmények:</h3>
+              <ul>
+                {#each dicePool6m.results as result, idx}
+                  <li>D{idx + 1} = {result} -> {dicePool6m.messages[idx]}</li>
+                {/each}
+              </ul>
+              
+        {/if}
+      </div>
+        
+      </div>
 {/if}
 </div>
 

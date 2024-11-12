@@ -4,16 +4,10 @@ import { onMount } from 'svelte';
   let selectedGame = 'Star Trek'; // Kezdőérték
 
   // Az egyes kockadobásokhoz külön-külön állapotok
-  let dicePool1 = { diceCount: 2, sides: 20, results: [], messages: [], mode: 'TN', targetNumber: 12 };
-  let dicePool2 = { diceCount: 5, sides: 6, results: [], messages: [], mode: 'TN', targetNumber: 0 };
-  let dicePool3 = { diceCount: 2, sides: 20, results: [], messages: [], mode: 'TN', targetNumber: 12 };
+  let dicePool6 = { diceCount: 4, sides: 6, results: [], messages: [], mode: 'dmg6', targetNumber: 0 };
+  let dicePool10 = { diceCount: 5, sides: 10, results: [], messages: [], mode: 'fixed', targetNumber: 0 };
+  let dicePool20 = { diceCount: 2, sides: 20, results: [], messages: [], mode: 'TN', targetNumber: 12 };
 
-  const availableSides = [4, 6, 8, 10, 12, 20, 100]
-
-  function setSides(dicePool, side) {
-    dicePool.sides = side;
-    dicePool.selectedSide = side;
-  }
 
   // Üzenetek hozzárendelése az eredményekhez
   function getMessageForRoll(roll, sides, mode, targetNumber) {
@@ -46,23 +40,30 @@ import { onMount } from 'svelte';
       } else if (roll <= targetNumber) {
         return "Siker";
       } 
-    }
+    } else if (mode === 'dmg6') {
+      // Célszámhoz hasonlítjuk 
+      if ( roll === 1) {
+        return "1 seb";
+      } else if (roll === 2) {
+        return "2 seb";
+      } else if (roll === 3 || roll === 4) {
+        return "Nem számít";
+      } else if (roll === 5 || roll === 6) {
+        return "1 sebzés plus effect";
+      }
+    } 
   }
 
   // A játék stílusa szerinti stílus beállítások
   const gameStyles = {
     'Star Trek': {
       
-      mode: 'TN',
-
       backgroundColor: '#190033',
       textColor: '#cc99cc',
       buttonColor: '#97567b',
       font: 'Arial, sans-serif'
     },
     'Mage the Awakening': {
-      sides: 10,
-      mode: 'fixed',
 
       backgroundColor: '#1a1a1a',
       textColor: '#ffffcc',
@@ -75,202 +76,191 @@ import { onMount } from 'svelte';
   let currentStyle = gameStyles[selectedGame];
   
   // Amikor a játék módosul
-  function handleGameChange(event) {
-    selectedGame = event.target.value;
+  function setGame(game) {
+    selectedGame = game;
     currentStyle = gameStyles[selectedGame];
-
-    
+    document.body.style.backgroundColor = currentStyle.backgroundColor;
   }
 
-  // Általános kockadobó függvény
-function rollDice(dicePool) {
-  dicePool.results = Array.from(
-    { length: dicePool.diceCount },
-    () => Math.floor(Math.random() * dicePool.sides) + 1
-  );
+  onMount(() => {
+    document.body.style.backgroundColor = currentStyle.backgroundColor;
+  });
+
+
+  function rollDice(dicePool) {
+  dicePool.results = [];
+
+  // Kockadobások a kocka szám alapján
+  for (let i = 0; i < dicePool.diceCount; i++) {
+    let roll = Math.floor(Math.random() * dicePool.sides) + 1;
+    dicePool.results.push(roll);
+
+    // Ha a játék Mage the Awakening, alkalmazzuk az "exploding dice" mechanizmust a 10-es kockákra
+    if (selectedGame === 'Mage the Awakening' && dicePool.sides === 10) {
+      while (roll === 10) {
+        roll = Math.floor(Math.random() * dicePool.sides) + 1;
+        dicePool.results.push(roll);
+      }
+    }
+  }
+
   dicePool.results.sort((a, b) => a - b);
+
+  // Eredményekhez tartozó üzenetek hozzárendelése
   dicePool.messages = dicePool.results.map(result =>
     getMessageForRoll(result, dicePool.sides, dicePool.mode, dicePool.targetNumber)
   );
 }
   
-function rollForPool1() {
-    rollDice(dicePool1);
+function rollForPool6() {
+    rollDice(dicePool6);
+    dicePool6 = { ...dicePool6 }; // Ez egy új referenciát hoz létre, amit Svelte felismer
+    
   }
 
-  function rollForPool2() {
-    rollDice(dicePool2);
+  function rollForPool10() {
+    rollDice(dicePool10);
+
+    // Számoljuk meg, hány siker értékelés volt
+  dicePool10.successCount = dicePool10.messages.reduce((count, message) => {
+    return message === "Siker" ? count + 1 : count;
+  }, 0);
+
+    dicePool10 = { ...dicePool10 };
+    
   }
 
-  function rollForPool3() {
-    rollDice(dicePool3);
+  function rollForPool20() {
+    rollDice(dicePool20);
+    dicePool20 = { ...dicePool20 };
+    
   }
 </script>
 
 
+<main style="background-color: {currentStyle.backgroundColor}; 
+  color: {currentStyle.textColor}; font-family: {currentStyle.font}; padding: 1rem;">
 
-
-<main style="background-color: {currentStyle.backgroundColor}; color: {currentStyle.textColor}; font-family: {currentStyle.font}; padding: 1rem;">
-  <label>
-    Válassz játékot:
-    <select on:change={handleGameChange}>
-      <option value="Star Trek">Star Trek</option>
-      <option value="Mage the Awakening">Mage the Awakening</option>
-    </select>
-  </label>
+  <div style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+    <button
+      on:click={() => setGame('Star Trek')}
+      style="background-color: {selectedGame === 'Star Trek' ? currentStyle.buttonColor : '#666666'}; 
+             color: {currentStyle.textColor}; 
+             padding: 0.5rem 1rem; 
+             border: none; 
+             border-radius: 4px; 
+             margin-right: 0.5rem; 
+             cursor: pointer;"
+    >
+      Star Trek
+    </button>
+    <button
+      on:click={() => setGame('Mage the Awakening')}
+      style="background-color: {selectedGame === 'Mage the Awakening' ? currentStyle.buttonColor : '#666666'}; 
+             color: {currentStyle.textColor}; 
+             padding: 0.5rem 1rem; 
+             border: none; 
+             border-radius: 4px; 
+             cursor: pointer;"
+    >
+      Mage the Awakening
+    </button>
+  </div>
 
 
   <h1>Dice Roller</h1>
   
 
   <div style="display: flex; justify-content: space-around;">
-    <!-- Kocka készlet 1 -->
-    <div class="dice-container">
-      <h2>Kocka készlet 1</h2>
-      <label>
-        Dobás:
-        <input type="number" bind:value={dicePool1.diceCount} min="1" style="width: 25px;" /> d {dicePool1.sides}
-      </label>
-      
-    
-      <label>
-        Válassz másik kockát:
-        <select bind:value={dicePool1.sides}>
-          <!-- Csak az engedélyezett oldal számokat tartalmazza -->
-          <option value="4">4</option>
-          <option value="6">6</option>
-          <option value="8">8</option>
-          <option value="12">12</option>
-          <option value="20">20</option>
-          <option value="100">100</option>
-        </select>
-      </label>
 
+<!-- Kocka készlet d20 -->
 
-      <label>
-        Értékelési mód:
-        <select bind:value={dicePool1.mode}>
-          <option value="percentage">Százalékos</option>
-          <option value="fixed">Fix</option>
-          <option value="TN">TN</option>
-        </select>
-      </label>
-      
-      <!-- TN érték megadása, ha a mód 'TN' -->
-      {#if dicePool1.mode === 'TN'}
-      <label>
-        Célszám:
-        <input type="number" bind:value={dicePool1.targetNumber} min="2" style="width: 25px;"/>
-      </label>
-      {/if}
+ {#if selectedGame === 'Star Trek'}
+  <div class="dice-container" style="background-color: #202020; color: {currentStyle.textColor};">
+    <h2>Task / Attack pool</h2>
+    <label>
+      Dobás:
+      <input type="number" bind:value={dicePool20.diceCount} min="1"  style="width: 25px;"/> d {dicePool20.sides}
+    </label>
 
-      <button style="background-color: {currentStyle.buttonColor};" on:click={rollForPool1}>Dobj!</button>
-      
-      <div class="results">
-        {#if dicePool1.results.length > 0}
-          <h3>Eredmények:</h3>
-          <ul>
-            {#each dicePool1.results as result, idx}
-              <li>Kocka {idx + 1}: {result} - {dicePool1.messages[idx]}</li>
+    <label>
+      Célszám:
+      <input type="number" bind:value={dicePool20.targetNumber}   style="width: 40px;"/> 
+    </label>
+ 
+    <button style="background-color: {currentStyle.buttonColor};" on:click={rollForPool20}>Dobj!</button>
+       
+    <div class="results">
+      {#if dicePool20.results.length > 0}
+      <h3>Eredmények:</h3>
+         <ul>
+         {#each dicePool20.results as result, idx}
+            <li>D{idx + 1} =  {result} -> {dicePool20.messages[idx]}</li>
             {/each}
           </ul>
-        {/if}
-      </div>
-    </div>
-
-    <!-- Kocka készlet 2 -->
-    <div class="dice-container">
-      <h2>Kocka készlet 2</h2>
-      <label>
-        Dobás:
-        <input type="number" bind:value={dicePool2.diceCount} min="1"  style="width: 25px;"/> d {dicePool2.sides}
-      </label>
-
-      
-
-      <label>
-        Értékelési mód:
-        <select bind:value={dicePool2.mode}>
-          <option value="percentage">Százalékos</option>
-          <option value="fixed">Fix</option>
-          <option value="TN">TN</option>
-        </select>
-      </label>
-
-      <!-- TN érték megadása, ha a mód 'TN' -->
-      {#if dicePool2.mode === 'TN'}
-      <label>
-        Célszám:
-        <input type="number" bind:value={dicePool2.targetNumber} min="2" style="width: 20px;"/>
-      </label>
       {/if}
-      
-      <button style="background-color: {currentStyle.buttonColor};" on:click={rollForPool2}>Dobj!</button>
-      
-      <div class="results">
-        {#if dicePool2.results.length > 0}
-          <h3>Eredmények:</h3>
-          <ul>
-            {#each dicePool2.results as result, idx}
-              <li>Kocka {idx + 1}: {result} - {dicePool2.messages[idx]}</li>
-            {/each}
-          </ul>
-        {/if}
-      </div>
     </div>
+     
+  </div>
+{/if}
 
-    <!-- Kocka készlet 3 -->
-     <!-- Dice Roller 3 csak "Mage the Awakening" esetén -->
-    {#if selectedGame === 'Mage the Awakening'}
-    <div class="dice-container">
-      <h2>Kocka készlet 3</h2>
-      <label>
-        Dobás:
-        <input type="number" bind:value={dicePool3.diceCount} min="1"  style="width: 25px;"/> d {dicePool3.sides}
-      </label>
-
-      <label>
-    Válassz másik kockát:
-    <select bind:value={dicePool3.sides}>
-      <!-- Csak az engedélyezett oldal számokat tartalmazza -->
-      <option value="4">4</option>
-      <option value="6">6</option>
-      <option value="8">8</option>
-      <option value="12">12</option>
-      <option value="20">20</option>
-      <option value="100">100</option>
-    </select>
+{#if selectedGame === 'Star Trek'}
+<div class="dice-container" style="background-color: #202020; color: {currentStyle.textColor};">
+  <h2>Sebzés kockák</h2>
+  <label>
+    Dobás:
+    <input type="number" bind:value={dicePool6.diceCount} min="1"  style="width: 25px;"/> d {dicePool6.sides}
   </label>
 
-      <label>
-        Értékelési mód:
-        <select bind:value={dicePool3.mode}>
-          <option value="percentage">Százalékos</option>
-          <option value="fixed">Fix</option>
-          <option value="TN">TN</option>
-        </select>
-      </label>
-
-      
-
-      <button style="background-color: {currentStyle.buttonColor};" on:click={rollDice3}>Dobj!</button>
-      
-      <div class="results">
-        {#if dicePool3.results.length > 0}
-          <h3>Eredmények:</h3>
-          <ul>
-            {#each dicePool3.results as result, idx}
-              <li>Kocka {idx + 1}: {result} - {dicePool3.messages[idx]}</li>
-            {/each}
-          </ul>
-        {/if}
-      </div>
-    
-    </div>
-  {/if}
+  <button style="background-color: {currentStyle.buttonColor};" on:click={rollForPool6}>Dobj!</button>
+     
+  <div class="results">
+    {#if dicePool6.results.length > 0}
+    <h3>Eredmények:</h3>
+       <ul>
+       {#each dicePool6.results as result, idx}
+          <li>D{idx + 1} = {result} -> {dicePool6.messages[idx]}</li>
+          {/each}
+        </ul>
+    {/if}
   </div>
+   
+</div>
+{/if}
+
+<!-- Kocka készlet Mage -->
+
+{#if selectedGame === 'Mage the Awakening'}
+  
+
+  <div class="dice-container" style="background-color: #332020; color: {currentStyle.textColor};">
+    <h2>Action / Spell</h2>
+      <label>
+        Dobás:
+        <input type="number" bind:value={dicePool10.diceCount} min="1"  style="width: 25px;"/> d {dicePool10.sides}
+    </label>
+  
+    <button style="background-color: {currentStyle.buttonColor};" on:click={rollForPool10}>Dobj!</button>
+        
+    <div class="results">
+      {#if dicePool10.results.length > 0}
+        <h3>Eredmények:</h3>
+            <ul>
+              {#each dicePool10.results as result, idx}
+                <li>D{idx + 1} = {result} -> {dicePool10.messages[idx]}</li>
+              {/each}
+            </ul>
+            <p>A 10-es kockákat automatikusan újra dobom.</p>
+            <p>Összes siker: {dicePool10.successCount}</p>
+      {/if}
+    </div>
+      
+    </div>
+{/if}
+</div>
 
   <style>
+
     main {
       max-width: 800px;
       margin: auto;

@@ -90,6 +90,7 @@ import { onMount } from 'svelte';
 
   function rollDice(dicePool) {
   dicePool.results = [];
+  dicePool.explodedResults = []; // Újradobott kockák eredményei
 
   // Kockadobások a kocka szám alapján
   for (let i = 0; i < dicePool.diceCount; i++) {
@@ -100,15 +101,20 @@ import { onMount } from 'svelte';
     if (selectedGame === 'Mage the Awakening' && dicePool.sides === 10) {
       while (roll === 10) {
         roll = Math.floor(Math.random() * dicePool.sides) + 1;
-        dicePool.results.push(roll);
+        dicePool.explodedResults.push(roll);
       }
     }
   }
 
   dicePool.results.sort((a, b) => a - b);
+  dicePool.explodedResults.sort((a, b) => a - b);
 
   // Eredményekhez tartozó üzenetek hozzárendelése
   dicePool.messages = dicePool.results.map(result =>
+    getMessageForRoll(result, dicePool.sides, dicePool.mode, dicePool.targetNumber)
+  );
+   // Az újradobott kockák üzenetei
+   dicePool.explodedMessages = dicePool.explodedResults.map(result =>
     getMessageForRoll(result, dicePool.sides, dicePool.mode, dicePool.targetNumber)
   );
 }
@@ -127,14 +133,13 @@ function rollForPool6() {
   function rollForPool10() {
     rollDice(dicePool10);
 
-    // Számoljuk meg, hány siker értékelés volt
-  dicePool10.successCount = dicePool10.messages.reduce((count, message) => {
-    return message === "Siker" ? count + 1 : count;
+    // Számoljuk meg, hány siker volt az eredeti és az újradobott kockákon
+  dicePool10.successCount = [...dicePool10.results, ...dicePool10.explodedResults].reduce((count, roll) => {
+    return roll >= 8 ? count + 1 : count;
   }, 0);
 
-    dicePool10 = { ...dicePool10 };
-    
-  }
+  dicePool10 = { ...dicePool10 };
+}
 
   function rollForPool20() {
     rollDice(dicePool20);
@@ -251,13 +256,22 @@ function rollForPool6() {
     <div class="results">
       {#if dicePool10.results.length > 0}
         <h3>Eredmények:</h3>
-            <ul>
-              {#each dicePool10.results as result, idx}
-                <li>D{idx + 1} = {result} -> {dicePool10.messages[idx]}</li>
-              {/each}
-            </ul>
-            <p>A 10-es kockákat automatikusan újra dobom.</p>
-            <p>Összes siker: {dicePool10.successCount}</p>
+        <ul>
+          {#each dicePool10.results as result, idx}
+            <li>Eredeti D{idx + 1} = {result} -> {dicePool10.messages[idx]}</li>
+          {/each}
+        </ul>
+        
+        {#if dicePool10.explodedResults.length > 0}
+          <h3>Újradobások:</h3>
+          <ul>
+            {#each dicePool10.explodedResults as result, idx}
+              <li>Újradobás D{idx + 1} = {result} -> {dicePool10.explodedMessages[idx]}</li>
+            {/each}
+          </ul>
+        {/if}
+        
+        <p>Összes siker: {dicePool10.successCount}</p>
       {/if}
     </div>
       
@@ -306,6 +320,14 @@ function rollForPool6() {
   div {
     margin-bottom: 2rem;
   }
+  .results ul li {
+  margin-bottom: 0.5rem;
+}
+.results h3 {
+  margin-top: 1rem;
+  color: #ffa500; /* Narancssárga az újradobásokhoz */
+}
+
     .dice-container {
       display: flex;
       flex-direction: column;

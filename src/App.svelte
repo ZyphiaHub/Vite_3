@@ -206,7 +206,7 @@ function rollForPool6() {
       <h3>Eredmények:</h3>
          <ul>
          {#each dicePool20.results as result, idx}
-            <li>D{idx + 1} =  {result} -> {dicePool20.messages[idx]}</li>
+            <li>{idx + 1}D =  {result} -> {dicePool20.messages[idx]}</li>
             {/each}
           </ul>
       {/if}
@@ -230,7 +230,7 @@ function rollForPool6() {
     <h3>Eredmények:</h3>
        <ul>
        {#each dicePool6.results as result, idx}
-          <li>D{idx + 1} = {result} -> {dicePool6.messages[idx]}</li>
+          <li>{idx + 1}D = {result} -> {dicePool6.messages[idx]}</li>
           {/each}
         </ul>
     {/if}
@@ -258,7 +258,7 @@ function rollForPool6() {
         <h3>Eredmények:</h3>
         <ul>
           {#each dicePool10.results as result, idx}
-            <li>Eredeti D{idx + 1} = {result} -> {dicePool10.messages[idx]}</li>
+            <li>Eredeti {idx + 1}D = {result} -> {dicePool10.messages[idx]}</li>
           {/each}
         </ul>
         
@@ -266,12 +266,12 @@ function rollForPool6() {
           <h3>Újradobások:</h3>
           <ul>
             {#each dicePool10.explodedResults as result, idx}
-              <li>Újradobás D{idx + 1} = {result} -> {dicePool10.explodedMessages[idx]}</li>
+              <li>Újradobás {idx + 1}D = {result} -> {dicePool10.explodedMessages[idx]}</li>
             {/each}
           </ul>
         {/if}
         
-        <p>Összes siker: {dicePool10.successCount}</p>
+        <h3>Összes siker: {dicePool10.successCount}</h3>
       {/if}
     </div>
       
